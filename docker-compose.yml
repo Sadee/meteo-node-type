@@ -1,0 +1,62 @@
+name: meteo-node-type
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: meteo-node-type-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-meteo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-meteo}
+      POSTGRES_DB: ${POSTGRES_DB:-meteo}
+    ports:
+      - "${DB_PORT:-54320}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  server:
+    build: ./server
+    container_name: meteo-node-type-server
+    environment:
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-change-me}
+      DATABASE_URL: postgres://${POSTGRES_USER:-meteo}:${POSTGRES_PASSWORD:-meteo}@db:5432/${POSTGRES_DB:-meteo}
+    ports:
+      - "${SERVER_PORT:-3310}:3000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Served at https://meteo-node-type.test by the shared caddy-proxy, which
+  # reaches this container by name over shared-dev-network.
+  client:
+    build: ./client
+    container_name: meteo-node-type-client
+    environment:
+      API_PROXY_TARGET: http://server:3000
+      PUBLIC_HOST: meteo-node-type.test
+    ports:
+      - "${CLIENT_PORT:-5183}:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    networks:
+      - default
+      - shared-dev-network
+    depends_on:
+      - server
+
+networks:
+  shared-dev-network:
+    external: true
+
+volumes:
+  db-data:

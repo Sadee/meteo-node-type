@@ -1,0 +1,21 @@
+services:
+  workspace:
+    image: mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
+    command: sleep infinity
+    environment:
+      CLAUDE_CONFIG_DIR: /claude-config
+    volumes:
+      # Relative to the repo root: Compose resolves paths from the first compose file.
+      - .:/workspace:cached
+      # Linux node_modules kept separate from the macOS ones on the host.
+      - workspace-server-node-modules:/workspace/server/node_modules
+      - workspace-client-node-modules:/workspace/client/node_modules
+      # Claude Code login and settings survive container rebuilds.
+      - claude-code-config:/claude-config
+    depends_on:
+      - db
+
+volumes:
+  workspace-server-node-modules:
+  workspace-client-node-modules:
+  claude-code-config:

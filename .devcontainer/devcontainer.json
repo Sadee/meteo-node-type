@@ -1,0 +1,20 @@
+{
+  "name": "meteo-node-type",
+  // Adds a "workspace" container to the main stack (db, server, client keep running as usual).
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
+  "service": "workspace",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "node",
+  // Keep the site at https://meteo-node-type.test up when VS Code closes.
+  "shutdownAction": "none",
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["anthropic.claude-code", "ms-ossdata.vscode-pgsql"]
+    }
+  },
+  // node_modules and the Claude config are Docker volumes (see docker-compose.yml) that start out root-owned.
+  "postCreateCommand": "sudo chown node:node server/node_modules client/node_modules /claude-config && npm --prefix server install && npm --prefix client install"
+}
