@@ -135,7 +135,7 @@ export function SiteDetailPage({ siteId, canEdit, onSignedOut }: Props) {
       </dl>
 
       <div className="page-head section-title">
-        <h2>Temperature</h2>
+        <h2>Current weather</h2>
       </div>
       <SiteWeather key={site.id} siteId={site.id} onSignedOut={onSignedOut} />
 

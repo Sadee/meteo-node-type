@@ -218,8 +218,26 @@ describe("PUT /api/sites/:id/managers", () => {
 });
 
 describe("GET /api/sites/:id/weather", () => {
+  // Non-default units, to show they come from Open-Meteo's current_units rather than being assumed.
   const openMeteo = {
-    current: { time: "2026-10-24T14:00", temperature_2m: 12.4 },
+    current_units: {
+      time: "iso8601",
+      temperature_2m: "°F",
+      relative_humidity_2m: "%",
+      is_day: "",
+      precipitation: "inch",
+      rain: "inch",
+      snowfall: "inch",
+    },
+    current: {
+      time: "2026-10-24T14:00",
+      temperature_2m: 54.3,
+      relative_humidity_2m: 78,
+      is_day: 1,
+      precipitation: 0.02,
+      rain: 0.02,
+      snowfall: 0,
+    },
   };
 
   afterEach(() => {
@@ -227,17 +245,60 @@ describe("GET /api/sites/:id/weather", () => {
     vi.restoreAllMocks();
   });
 
-  it("returns the current temperature at the site's coordinates", async () => {
+  it("returns the current weather at the site's coordinates from a single request", async () => {
     const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(openMeteo)));
     vi.stubGlobal("fetch", fetch);
     const app = createApp(stubDb(vi.fn().mockResolvedValue({ rows: [site] })), SECRET);
 
     const res = await request(app).get("/api/sites/7/weather").set("Cookie", cookieFor(manager));
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ temperature: 12.4 });
+    expect(res.body).toEqual({
+      temperature: { value: 54.3, unit: "°F" },
+      humidity: { value: 78, unit: "%" },
+      precipitation: { value: 0.02, unit: "inch" },
+      rain: { value: 0.02, unit: "inch" },
+      snowfall: { value: 0, unit: "inch" },
+      isDay: true,
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
     const url = new URL(fetch.mock.calls[0][0]);
     expect(url.searchParams.get("latitude")).toBe("48.7758");
     expect(url.searchParams.get("longitude")).toBe("9.1829");
+    expect(url.searchParams.get("current")?.split(",")).toEqual([
+      "temperature_2m",
+      "relative_humidity_2m",
+      "is_day",
+      "precipitation",
+      "rain",
+      "snowfall",
+    ]);
+  });
+
+  it("returns null for values Open-Meteo leaves out and keeps the rest", async () => {
+    const reply = {
+      current: { ...openMeteo.current, rain: undefined, is_day: null },
+      current_units: { ...openMeteo.current_units, snowfall: undefined },
+    };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(reply))));
+    const app = createApp(stubDb(vi.fn().mockResolvedValue({ rows: [site] })), SECRET);
+
+    const res = await request(app).get("/api/sites/7/weather").set("Cookie", cookieFor(director));
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      temperature: { value: 54.3, unit: "°F" },
+      rain: null,
+      snowfall: { value: 0, unit: "" },
+      isDay: null,
+    });
+  });
+
+  it("reports night when is_day is 0", async () => {
+    const reply = { ...openMeteo, current: { ...openMeteo.current, is_day: 0 } };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(reply))));
+    const app = createApp(stubDb(vi.fn().mockResolvedValue({ rows: [site] })), SECRET);
+
+    const res = await request(app).get("/api/sites/7/weather").set("Cookie", cookieFor(director));
+    expect(res.body.isDay).toBe(false);
   });
 
   it("returns 404 without calling Open-Meteo for a site a manager isn't assigned to", async () => {

@@ -82,6 +82,29 @@
   font-weight: 600;
   line-height: 1;
 }
+.weather .now {
+  display: grid;
+  gap: 6px;
+}
+.weather .daylight {
+  color: var(--muted);
+}
+.weather .conditions {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+}
+.weather .conditions dt {
+  color: var(--muted);
+}
+.weather .conditions dd {
+  margin: 0;
+}
+.weather .hint {
+  margin-left: auto;
+  align-self: flex-end;
+}
 .managers {
   list-style: none;
   margin: 0;

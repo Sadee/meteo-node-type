@@ -19,7 +19,15 @@ export type Site = {
 
 export type SiteInput = Pick<Site, "name" | "description" | "city" | "country" | "latitude" | "longitude" | "status">;
 
+// A value with the unit Open-Meteo reported it in; null when Open-Meteo left it out.
+export type Reading = { value: number; unit: string } | null;
+
 // Current conditions at a site, from Open-Meteo via the API.
 export type Weather = {
-  temperature: number; // °C
+  temperature: Reading;
+  humidity: Reading;
+  precipitation: Reading;
+  rain: Reading;
+  snowfall: Reading;
+  isDay: boolean | null;
 };

@@ -104,7 +104,7 @@ export function sitesRouter(db: Db) {
     }
   });
 
-  // Current temperature at the site's coordinates, for anyone who can see the site.
+  // Current weather at the site's coordinates, for anyone who can see the site.
   router.get("/:id/weather", async (req, res, next) => {
     const id = siteId(req);
     try {
