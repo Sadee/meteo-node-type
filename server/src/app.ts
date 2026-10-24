@@ -2,6 +2,7 @@ import cookieParser from "cookie-parser";
 import express from "express";
 import type { Pool } from "pg";
 import { authRouter, requireAuth, requireRole } from "./auth.js";
+import { sitesRouter } from "./sites.js";
 import { managersRouter } from "./users.js";
 
 export type Db = Pick<Pool, "query">;
@@ -44,6 +45,7 @@ export function createApp(db: Db, jwtSecret: string) {
     }
   });
 
+  app.use("/api/sites", sitesRouter(db));
   app.use("/api/managers", requireRole("director"), managersRouter(db));
 
   return app;

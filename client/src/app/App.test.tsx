@@ -11,6 +11,7 @@ function signedInAs(user: typeof dana) {
   return {
     "GET /api/auth/me": { body: user },
     "GET /api/items": { body: [] },
+    "GET /api/sites": { body: [] },
     "GET /api/managers": { body: [] },
     "POST /api/auth/logout": { status: 204 },
   };
@@ -32,13 +33,13 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Dana" })).toBeInTheDocument();
   });
 
-  it("opens the Items page from the dashboard card", async () => {
+  it("opens the Sites page from the dashboard card", async () => {
     mockFetch(signedInAs(dana));
     render(<App />);
 
-    await userEvent.click(await screen.findByRole("link", { name: /^items/i }));
+    await userEvent.click(await screen.findByRole("link", { name: /^sites/i }));
 
-    expect(await screen.findByRole("heading", { name: "Items" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Sites" })).toBeInTheDocument();
   });
 
   it("gives directors the Managers card and page", async () => {
@@ -49,7 +50,7 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "Managers" })).toBeInTheDocument();
   });
 
-  it.each(["#/managers"])("sends a manager from director-only %s to the dashboard", async (hash) => {
+  it.each(["#/managers", "#/sites/new"])("sends a manager from director-only %s to the dashboard", async (hash) => {
     window.location.hash = hash;
     mockFetch(signedInAs(mia));
     render(<App />);

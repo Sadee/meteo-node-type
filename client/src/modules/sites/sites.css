@@ -1,0 +1,102 @@
+/* Sites list */
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.filters input {
+  flex: 1;
+  min-width: 200px;
+  background: var(--surface);
+}
+.filters select {
+  background: var(--surface);
+  text-transform: capitalize;
+}
+.table a {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* Status badge */
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  background: var(--bg);
+  color: var(--muted);
+}
+.badge-active {
+  background: #dcfce7;
+  color: #166534;
+}
+.badge-planned {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.badge-inactive {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge-closed {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+/* Site detail */
+.details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 12px 24px;
+  margin: 0;
+}
+.details dt {
+  color: var(--muted);
+}
+.details dd {
+  margin: 0;
+}
+.details a {
+  margin-left: 8px;
+  font-size: 0.9rem;
+}
+.section-title h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.managers {
+  list-style: none;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.managers .muted,
+.picker .muted {
+  margin: 0 0 0 6px;
+  font-size: 0.9rem;
+}
+.picker {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 0;
+  border: none;
+}
+.picker legend {
+  margin-bottom: 10px;
+}
+.picker label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.form textarea {
+  resize: vertical;
+}
+.form select {
+  text-transform: capitalize;
+}

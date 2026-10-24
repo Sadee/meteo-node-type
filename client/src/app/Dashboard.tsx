@@ -13,6 +13,15 @@ export function Dashboard({ isDirector }: { isDirector: boolean }) {
           <h2>Items</h2>
           <p className="muted">Add new items and view the list.</p>
         </a>
+        <a href="#/sites" className="tile">
+          <span className="tile-icon" aria-hidden="true">
+            ⚑
+          </span>
+          <h2>Sites</h2>
+          <p className="muted">
+            {isDirector ? "Add, edit and remove manufacturing sites." : "View the sites you manage."}
+          </p>
+        </a>
         {isDirector && (
           <a href="#/managers" className="tile">
             <span className="tile-icon" aria-hidden="true">
