@@ -1,5 +1,7 @@
 import { FormEvent, useState } from "react";
-import { api, type User } from "./api";
+import { userApi } from "./api";
+import type { User } from "./types";
+import "./user.css";
 
 type Mode = "login" | "register";
 
@@ -21,8 +23,9 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: (user: User) =>
     setSubmitting(true);
     setError(null);
     try {
-      const body = mode === "login" ? { email, password } : { name, email, password };
-      onAuthenticated(await api<User>(`/auth/${mode}`, { method: "POST", body }));
+      const user =
+        mode === "login" ? await userApi.login({ email, password }) : await userApi.register({ name, email, password });
+      onAuthenticated(user);
     } catch (err) {
       setError((err as Error).message);
     } finally {

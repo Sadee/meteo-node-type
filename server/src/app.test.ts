@@ -1,9 +1,14 @@
 import bcrypt from "bcryptjs";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
-import { createApp } from "./app.js";
+import { createApp, type Db } from "./app.js";
 
 const SECRET = "test-secret";
+
+// Only query() is used, so a stub with a mocked query() stands in for the pg pool.
+function stubDb(query = vi.fn()): Db {
+  return { query } as unknown as Db;
+}
 
 function sessionCookie(res: request.Response): string {
   const cookies = res.headers["set-cookie"] as unknown as string[] | undefined;
@@ -14,14 +19,14 @@ function sessionCookie(res: request.Response): string {
 
 describe("api", () => {
   it("GET /api/health", async () => {
-    const app = createApp({ query: vi.fn() } as any, SECRET);
+    const app = createApp(stubDb(), SECRET);
     const res = await request(app).get("/api/health");
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: "ok" });
   });
 
   it("GET /api/items requires a session", async () => {
-    const app = createApp({ query: vi.fn() } as any, SECRET);
+    const app = createApp(stubDb(), SECRET);
     const res = await request(app).get("/api/items");
     expect(res.status).toBe(401);
   });
@@ -35,7 +40,7 @@ describe("auth", () => {
       .fn()
       .mockResolvedValueOnce({ rows: [user] })
       .mockResolvedValueOnce({ rows: [{ id: 1, name: "a", created_at: "2026-01-01" }] });
-    const app = createApp({ query } as any, SECRET);
+    const app = createApp(stubDb(query), SECRET);
 
     const res = await request(app)
       .post("/api/auth/register")
@@ -53,7 +58,7 @@ describe("auth", () => {
   });
 
   it("register rejects a short password", async () => {
-    const app = createApp({ query: vi.fn() } as any, SECRET);
+    const app = createApp(stubDb(), SECRET);
     const res = await request(app)
       .post("/api/auth/register")
       .send({ name: "Ada", email: "ada@example.com", password: "short" });
@@ -62,7 +67,7 @@ describe("auth", () => {
 
   it("register returns 409 for a duplicate email", async () => {
     const query = vi.fn().mockRejectedValue({ code: "23505" });
-    const app = createApp({ query } as any, SECRET);
+    const app = createApp(stubDb(query), SECRET);
     const res = await request(app)
       .post("/api/auth/register")
       .send({ name: "Ada", email: "ada@example.com", password: "password123" });
@@ -72,11 +77,9 @@ describe("auth", () => {
   it("login succeeds with the right password and /me returns the user", async () => {
     const password_hash = bcrypt.hashSync("password123", 4);
     const query = vi.fn().mockResolvedValue({ rows: [{ ...user, password_hash }] });
-    const app = createApp({ query } as any, SECRET);
+    const app = createApp(stubDb(query), SECRET);
 
-    const res = await request(app)
-      .post("/api/auth/login")
-      .send({ email: "ada@example.com", password: "password123" });
+    const res = await request(app).post("/api/auth/login").send({ email: "ada@example.com", password: "password123" });
     expect(res.status).toBe(200);
     expect(res.body).toEqual(user);
 
@@ -90,11 +93,9 @@ describe("auth", () => {
       .fn()
       .mockResolvedValueOnce({ rows: [{ ...user, password_hash }] })
       .mockResolvedValueOnce({ rows: [] });
-    const app = createApp({ query } as any, SECRET);
+    const app = createApp(stubDb(query), SECRET);
 
-    const wrong = await request(app)
-      .post("/api/auth/login")
-      .send({ email: "ada@example.com", password: "nope-nope" });
+    const wrong = await request(app).post("/api/auth/login").send({ email: "ada@example.com", password: "nope-nope" });
     const unknown = await request(app)
       .post("/api/auth/login")
       .send({ email: "who@example.com", password: "password123" });
@@ -104,12 +105,12 @@ describe("auth", () => {
   });
 
   it("rejects a session signed with a different secret", async () => {
-    const other = createApp({ query: vi.fn().mockResolvedValue({ rows: [user] }) } as any, "other");
+    const other = createApp(stubDb(vi.fn().mockResolvedValue({ rows: [user] })), "other");
     const res = await request(other)
       .post("/api/auth/register")
       .send({ name: "Ada", email: "ada@example.com", password: "password123" });
 
-    const app = createApp({ query: vi.fn() } as any, SECRET);
+    const app = createApp(stubDb(), SECRET);
     const me = await request(app).get("/api/auth/me").set("Cookie", sessionCookie(res));
     expect(me.status).toBe(401);
   });

@@ -22,9 +22,7 @@ export function createApp(db: Db, jwtSecret: string) {
 
   app.get("/api/items", async (_req, res, next) => {
     try {
-      const { rows } = await db.query(
-        "SELECT id, name, created_at FROM items ORDER BY id",
-      );
+      const { rows } = await db.query("SELECT id, name, created_at FROM items ORDER BY id");
       res.json(rows);
     } catch (err) {
       next(err);
@@ -38,10 +36,7 @@ export function createApp(db: Db, jwtSecret: string) {
       return;
     }
     try {
-      const { rows } = await db.query(
-        "INSERT INTO items (name) VALUES ($1) RETURNING id, name, created_at",
-        [name],
-      );
+      const { rows } = await db.query("INSERT INTO items (name) VALUES ($1) RETURNING id, name, created_at", [name]);
       res.status(201).json(rows[0]);
     } catch (err) {
       next(err);

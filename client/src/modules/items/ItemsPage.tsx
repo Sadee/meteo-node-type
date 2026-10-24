@@ -1,9 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
-import { api, ApiError, type Item, type User } from "./api";
+import { ApiError } from "../../shared/api";
+import { itemsApi } from "./api";
+import type { Item } from "./types";
+import "./items.css";
 
-type Props = { user: User; onSignedOut: () => void };
+type Props = { onSignedOut: () => void };
 
-export function ItemsPage({ user, onSignedOut }: Props) {
+export function ItemsPage({ onSignedOut }: Props) {
   const [items, setItems] = useState<Item[]>([]);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -15,13 +18,15 @@ export function ItemsPage({ user, onSignedOut }: Props) {
   }
 
   useEffect(() => {
-    api<Item[]>("/items").then(setItems).catch(handleError);
+    itemsApi.list().then(setItems).catch(handleError);
+    // Load once on mount. handleError is recreated every render, so listing it would refetch each time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function addItem(e: FormEvent) {
     e.preventDefault();
     try {
-      const item = await api<Item>("/items", { method: "POST", body: { name } });
+      const item = await itemsApi.create({ name });
       setItems((prev) => [...prev, item]);
       setName("");
       setError(null);
@@ -30,20 +35,13 @@ export function ItemsPage({ user, onSignedOut }: Props) {
     }
   }
 
-  async function signOut() {
-    await api("/auth/logout", { method: "POST" }).catch(() => {});
-    onSignedOut();
-  }
-
   return (
-    <main className="page">
-      <header>
-        <h1>Meteo Node Type Demo</h1>
-        <div className="user">
-          <span>{user.name}</span>
-          <button onClick={signOut}>Sign out</button>
-        </div>
-      </header>
+    <>
+      <a href="#/" className="back">
+        ← Dashboard
+      </a>
+      <h1>Items</h1>
+      <p className="muted">Add an item and it will appear in the list below.</p>
 
       <form className="inline" onSubmit={addItem}>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="New item" />
@@ -57,6 +55,6 @@ export function ItemsPage({ user, onSignedOut }: Props) {
           <li key={i.id}>{i.name}</li>
         ))}
       </ul>
-    </main>
+    </>
   );
 }

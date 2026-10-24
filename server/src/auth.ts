@@ -6,6 +6,8 @@ import type { Db } from "./app.js";
 export type AuthUser = { id: number; name: string; email: string };
 
 declare global {
+  // Declaration merging onto Express's global namespace is how req.user gets typed.
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: AuthUser;
@@ -98,10 +100,7 @@ export function authRouter(db: Db, secret: string) {
     const password = typeof req.body?.password === "string" ? req.body.password : "";
 
     try {
-      const { rows } = await db.query(
-        "SELECT id, name, email, password_hash FROM users WHERE email = $1",
-        [email],
-      );
+      const { rows } = await db.query("SELECT id, name, email, password_hash FROM users WHERE email = $1", [email]);
       const row = rows[0];
       const ok = await bcrypt.compare(password, row?.password_hash ?? DUMMY_HASH);
       if (!row || !ok) {

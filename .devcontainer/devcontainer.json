@@ -16,5 +16,5 @@
     }
   },
   // node_modules and the Claude config are Docker volumes (see docker-compose.yml) that start out root-owned.
-  "postCreateCommand": "sudo chown node:node server/node_modules client/node_modules /claude-config && npm --prefix server install && npm --prefix client install"
+  "postCreateCommand": "sudo chown node:node server/node_modules client/node_modules /claude-config && npm --prefix server install && npm --prefix client install && scripts/install-gitleaks.sh"
 }
