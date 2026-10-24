@@ -10,7 +10,6 @@ const mia = { id: 2, name: "Mia", email: "mia@example.com", role: "manager" };
 function signedInAs(user: typeof dana) {
   return {
     "GET /api/auth/me": { body: user },
-    "GET /api/items": { body: [] },
     "GET /api/sites": { body: [] },
     "GET /api/managers": { body: [] },
     "POST /api/auth/logout": { status: 204 },

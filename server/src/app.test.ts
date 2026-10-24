@@ -14,7 +14,6 @@ describe("api", () => {
 
   it("protected routes require a session", async () => {
     const app = createApp(stubDb(), SECRET);
-    expect((await request(app).get("/api/items")).status).toBe(401);
     expect((await request(app).get("/api/sites")).status).toBe(401);
     expect((await request(app).get("/api/managers")).status).toBe(401);
   });

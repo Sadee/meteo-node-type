@@ -4,15 +4,15 @@ import { api, ApiError } from "./api";
 
 describe("api", () => {
   it("prefixes /api and returns the parsed JSON", async () => {
-    mockFetch({ "GET /api/items": { body: [{ id: 1 }] } });
-    await expect(api("/items")).resolves.toEqual([{ id: 1 }]);
+    mockFetch({ "GET /api/sites": { body: [{ id: 1 }] } });
+    await expect(api("/sites")).resolves.toEqual([{ id: 1 }]);
   });
 
   it("sends a JSON body with the right content type", async () => {
-    const fetch = mockFetch({ "POST /api/items": { status: 201, body: { id: 1 } } });
-    await api("/items", { method: "POST", body: { name: "Pen" } });
+    const fetch = mockFetch({ "POST /api/sites": { status: 201, body: { id: 1 } } });
+    await api("/sites", { method: "POST", body: { name: "Plant" } });
 
-    expect(sentBody(fetch)).toEqual({ name: "Pen" });
+    expect(sentBody(fetch)).toEqual({ name: "Plant" });
     expect(fetch.mock.calls[0][1]?.headers).toEqual({ "Content-Type": "application/json" });
   });
 
@@ -22,9 +22,9 @@ describe("api", () => {
   });
 
   it("throws ApiError with the status and the server's error message", async () => {
-    mockFetch({ "GET /api/items": { status: 401, body: { error: "Not signed in" } } });
+    mockFetch({ "GET /api/sites": { status: 401, body: { error: "Not signed in" } } });
 
-    const err = await api("/items").catch((e) => e);
+    const err = await api("/sites").catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect(err).toMatchObject({ status: 401, message: "Not signed in" });
   });

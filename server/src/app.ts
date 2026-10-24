@@ -22,29 +22,6 @@ export function createApp(db: Db, jwtSecret: string) {
   // Everything registered below requires a signed-in user.
   app.use("/api", requireAuth(jwtSecret));
 
-  app.get("/api/items", async (_req, res, next) => {
-    try {
-      const { rows } = await db.query("SELECT id, name, created_at FROM items ORDER BY id");
-      res.json(rows);
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  app.post("/api/items", async (req, res, next) => {
-    const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
-    if (!name) {
-      res.status(400).json({ error: "name is required" });
-      return;
-    }
-    try {
-      const { rows } = await db.query("INSERT INTO items (name) VALUES ($1) RETURNING id, name, created_at", [name]);
-      res.status(201).json(rows[0]);
-    } catch (err) {
-      next(err);
-    }
-  });
-
   app.use("/api/sites", sitesRouter(db));
   app.use("/api/managers", requireRole("director"), managersRouter(db));
 
