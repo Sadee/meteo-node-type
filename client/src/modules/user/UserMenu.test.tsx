@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { UserMenu } from "./UserMenu";
 
-const ada = { id: 1, name: "Ada", email: "ada@example.com" };
+const ada = { id: 1, name: "Ada", email: "ada@example.com", role: "manager" as const };
 
 function openMenu(onSignOut = vi.fn()) {
   render(

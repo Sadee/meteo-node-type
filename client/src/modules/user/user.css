@@ -1,4 +1,4 @@
-/* Sign in / register */
+/* Sign in */
 .auth {
   min-height: 100vh;
   display: grid;
@@ -13,22 +13,6 @@
   border: 1px solid var(--border);
   border-radius: 14px;
 }
-.tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  padding: 4px;
-  margin-bottom: 20px;
-  background: var(--bg);
-  border-radius: 10px;
-}
-.tabs button {
-  border: none;
-}
-.tabs button[aria-selected="true"] {
-  background: var(--surface);
-  font-weight: 600;
-}
 .card form {
   display: grid;
   gap: 14px;
@@ -42,6 +26,11 @@
 .card button.primary {
   padding: 11px;
   margin-top: 4px;
+}
+.card .hint {
+  display: block;
+  margin: 16px 0 0;
+  text-align: center;
 }
 
 /* User dropdown */
@@ -115,6 +104,9 @@
 }
 .profile dd {
   margin: 0;
+}
+.capitalize {
+  text-transform: capitalize;
 }
 
 @media (max-width: 520px) {

@@ -1,4 +1,5 @@
--- Runs only when the db-data volume is first created.
+-- Migrations in this folder run in name order when the db-data volume is first created.
+-- On an existing database, run only the new ones (see CLAUDE.md).
 CREATE TABLE IF NOT EXISTS users (
   id            SERIAL PRIMARY KEY,
   name          TEXT NOT NULL,

@@ -4,12 +4,17 @@ import { describe, expect, it } from "vitest";
 import { mockFetch } from "../test/mockFetch";
 import { App } from "./App";
 
-const ada = { id: 1, name: "Ada", email: "ada@example.com" };
-const signedIn = {
-  "GET /api/auth/me": { body: ada },
-  "GET /api/items": { body: [] },
-  "POST /api/auth/logout": { status: 204 },
-};
+const dana = { id: 1, name: "Dana", email: "dana@example.com", role: "director" };
+const mia = { id: 2, name: "Mia", email: "mia@example.com", role: "manager" };
+
+function signedInAs(user: typeof dana) {
+  return {
+    "GET /api/auth/me": { body: user },
+    "GET /api/items": { body: [] },
+    "GET /api/managers": { body: [] },
+    "POST /api/auth/logout": { status: 204 },
+  };
+}
 
 describe("App", () => {
   it("shows the sign-in page when there is no session", async () => {
@@ -20,36 +25,54 @@ describe("App", () => {
   });
 
   it("shows the dashboard with the user's name when signed in", async () => {
-    mockFetch(signedIn);
+    mockFetch(signedInAs(dana));
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ada" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dana" })).toBeInTheDocument();
   });
 
   it("opens the Items page from the dashboard card", async () => {
-    mockFetch(signedIn);
+    mockFetch(signedInAs(dana));
     render(<App />);
 
-    await userEvent.click(await screen.findByRole("link", { name: /items/i }));
+    await userEvent.click(await screen.findByRole("link", { name: /^items/i }));
 
     expect(await screen.findByRole("heading", { name: "Items" })).toBeInTheDocument();
   });
 
+  it("gives directors the Managers card and page", async () => {
+    window.location.hash = "#/managers";
+    mockFetch(signedInAs(dana));
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Managers" })).toBeInTheDocument();
+  });
+
+  it.each(["#/managers"])("sends a manager from director-only %s to the dashboard", async (hash) => {
+    window.location.hash = hash;
+    mockFetch(signedInAs(mia));
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /managers/i })).not.toBeInTheDocument();
+  });
+
   it("opens the profile page from the URL", async () => {
     window.location.hash = "#/profile";
-    mockFetch(signedIn);
+    mockFetch(signedInAs(dana));
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Profile" })).toBeInTheDocument();
-    expect(screen.getByText("ada@example.com")).toBeInTheDocument();
+    expect(screen.getByText("dana@example.com")).toBeInTheDocument();
+    expect(screen.getByText("director")).toBeInTheDocument();
   });
 
   it("returns to sign-in after logging out", async () => {
-    mockFetch(signedIn);
+    mockFetch(signedInAs(dana));
     render(<App />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Ada" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Dana" }));
     await userEvent.click(screen.getByRole("menuitem", { name: "Logout" }));
 
     expect(await screen.findByText("Sign in to your account")).toBeInTheDocument();

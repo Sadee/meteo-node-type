@@ -18,3 +18,8 @@ export async function api<T>(path: string, options: { method?: string; body?: un
   if (!res.ok) throw new ApiError(res.status, data?.error ?? res.statusText);
   return data as T;
 }
+
+// A 401 means the session expired or was cleared; pages send the user back to sign in.
+export function isUnauthorized(err: unknown) {
+  return err instanceof ApiError && err.status === 401;
+}

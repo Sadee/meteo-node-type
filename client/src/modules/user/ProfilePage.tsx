@@ -13,6 +13,8 @@ export function ProfilePage({ user }: { user: User }) {
         <dd>{user.name}</dd>
         <dt>Email</dt>
         <dd>{user.email}</dd>
+        <dt>Role</dt>
+        <dd className="capitalize">{user.role}</dd>
       </dl>
     </>
   );

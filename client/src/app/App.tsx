@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { ItemsPage } from "../modules/items";
-import { AuthPage, ProfilePage, userApi, type User } from "../modules/user";
+import { AuthPage, ManagersPage, ProfilePage, userApi, type User } from "../modules/user";
 import { Dashboard } from "./Dashboard";
 import { Layout } from "./Layout";
 
-// Minimal hash routing (#/, #/items, #/profile) so links and the back button work without a router package.
+// Minimal hash routing (#/, #/items, #/profile, …) so links and the back button work without a router package.
 function useRoute() {
   const read = () => window.location.hash.replace(/^#/, "") || "/";
   const [route, setRoute] = useState(read);
@@ -41,10 +41,14 @@ export function App() {
   if (user === undefined) return null;
   if (user === null) return <AuthPage onAuthenticated={setUser} />;
 
+  // The UI hides what a manager can't do; the API enforces it.
+  const isDirector = user.role === "director";
+
   let page;
   if (route === "/items") page = <ItemsPage onSignedOut={signedOut} />;
+  else if (route === "/managers" && isDirector) page = <ManagersPage onSignedOut={signedOut} />;
   else if (route === "/profile") page = <ProfilePage user={user} />;
-  else page = <Dashboard />;
+  else page = <Dashboard isDirector={isDirector} />;
 
   return (
     <Layout user={user} onSignOut={signOut}>

@@ -3,29 +3,19 @@ import { userApi } from "./api";
 import type { User } from "./types";
 import "./user.css";
 
-type Mode = "login" | "register";
-
+// Sign-in only: accounts are created by a director on the Managers page.
 export function AuthPage({ onAuthenticated }: { onAuthenticated: (user: User) => void }) {
-  const [mode, setMode] = useState<Mode>("login");
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  function switchMode(next: Mode) {
-    setMode(next);
-    setError(null);
-  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
-      const user =
-        mode === "login" ? await userApi.login({ email, password }) : await userApi.register({ name, email, password });
-      onAuthenticated(user);
+      onAuthenticated(await userApi.login({ email, password }));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -33,30 +23,13 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: (user: User) =>
     }
   }
 
-  const isLogin = mode === "login";
-
   return (
     <main className="auth">
       <div className="card">
         <h1>Meteo Node Type Demo</h1>
-        <p className="muted">{isLogin ? "Sign in to your account" : "Create a new account"}</p>
-
-        <div className="tabs" role="tablist">
-          <button role="tab" aria-selected={isLogin} onClick={() => switchMode("login")}>
-            Sign in
-          </button>
-          <button role="tab" aria-selected={!isLogin} onClick={() => switchMode("register")}>
-            Register
-          </button>
-        </div>
+        <p className="muted">Sign in to your account</p>
 
         <form onSubmit={submit}>
-          {!isLogin && (
-            <label>
-              Name
-              <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required />
-            </label>
-          )}
           <label>
             Email
             <input
@@ -73,12 +46,9 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: (user: User) =>
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete={isLogin ? "current-password" : "new-password"}
-              minLength={isLogin ? undefined : 8}
-              maxLength={72}
+              autoComplete="current-password"
               required
             />
-            {!isLogin && <span className="hint">At least 8 characters</span>}
           </label>
 
           {error && (
@@ -88,9 +58,10 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: (user: User) =>
           )}
 
           <button type="submit" className="primary" disabled={submitting}>
-            {submitting ? "Please wait…" : isLogin ? "Sign in" : "Create account"}
+            {submitting ? "Please wait…" : "Sign in"}
           </button>
         </form>
+        <p className="hint">No account? Ask a director to create one for you.</p>
       </div>
     </main>
   );

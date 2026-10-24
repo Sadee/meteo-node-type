@@ -1,6 +1,6 @@
 import "./app.css";
 
-export function Dashboard() {
+export function Dashboard({ isDirector }: { isDirector: boolean }) {
   return (
     <>
       <h1>Dashboard</h1>
@@ -13,6 +13,15 @@ export function Dashboard() {
           <h2>Items</h2>
           <p className="muted">Add new items and view the list.</p>
         </a>
+        {isDirector && (
+          <a href="#/managers" className="tile">
+            <span className="tile-icon" aria-hidden="true">
+              ☺
+            </span>
+            <h2>Managers</h2>
+            <p className="muted">Create manager accounts for your sites.</p>
+          </a>
+        )}
       </div>
     </>
   );
