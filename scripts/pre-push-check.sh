@@ -68,13 +68,26 @@ check() {
   fi
 }
 
-# Committed history plus the working tree (respects .gitignore, so local .env files are skipped).
+# Committed history plus the working tree. `gitleaks dir` doesn't read .gitignore, so the working-tree
+# scan runs on a copy of just the files git tracks or would track; ignored local files (.env,
+# node_modules) are skipped. Findings show repo-relative paths.
 secrets() {
   if ! command -v gitleaks >/dev/null; then
     echo "gitleaks is not installed; run: scripts/install-gitleaks.sh"
     return 1
   fi
-  gitleaks git --redact --no-banner && gitleaks dir . --redact --no-banner
+  gitleaks git --redact --no-banner || return 1
+
+  local tmp status
+  tmp=$(mktemp -d)
+  while IFS= read -r -d '' f; do
+    # Tracked files deleted in the working tree are still listed; skip them.
+    [[ -f $f ]] && cp --parents -- "$f" "$tmp"
+  done < <(git ls-files -z --cached --others --exclude-standard)
+  (cd "$tmp" && gitleaks dir . --redact --no-banner)
+  status=$?
+  rm -rf "$tmp"
+  return $status
 }
 
 check "secrets: gitleaks" . secrets
