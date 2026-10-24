@@ -1,6 +1,7 @@
 import { Router, type Request } from "express";
 import type { Db } from "./app.js";
 import { requireRole, type AuthUser } from "./auth.js";
+import { fetchCurrentWeather, WeatherUnavailableError } from "./weather.js";
 
 export const SITE_STATUSES = ["planned", "active", "inactive", "closed"] as const;
 type SiteStatus = (typeof SITE_STATUSES)[number];
@@ -99,6 +100,26 @@ export function sitesRouter(db: Db) {
       }
       res.json(site);
     } catch (err) {
+      next(err);
+    }
+  });
+
+  // Current temperature at the site's coordinates, for anyone who can see the site.
+  router.get("/:id/weather", async (req, res, next) => {
+    const id = siteId(req);
+    try {
+      const site = id && (await findSite(id, viewerFilter(req.user)));
+      if (!site) {
+        res.status(404).json({ error: "Site not found" });
+        return;
+      }
+      res.json(await fetchCurrentWeather(site.latitude, site.longitude));
+    } catch (err) {
+      if (err instanceof WeatherUnavailableError) {
+        console.error(err.message);
+        res.status(502).json({ error: "Weather is unavailable right now" });
+        return;
+      }
       next(err);
     }
   });

@@ -18,3 +18,8 @@ export type Site = {
 };
 
 export type SiteInput = Pick<Site, "name" | "description" | "city" | "country" | "latitude" | "longitude" | "status">;
+
+// Current conditions at a site, from Open-Meteo via the API.
+export type Weather = {
+  temperature: number; // °C
+};

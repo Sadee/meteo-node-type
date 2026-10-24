@@ -1,9 +1,10 @@
 import { api } from "../../shared/api";
-import type { Site, SiteInput, SiteManager } from "./types";
+import type { Site, SiteInput, SiteManager, Weather } from "./types";
 
 export const sitesApi = {
   list: () => api<Site[]>("/sites"),
   get: (id: number) => api<Site>(`/sites/${id}`),
+  weather: (id: number) => api<Weather>(`/sites/${id}/weather`),
   create: (body: SiteInput) => api<Site>("/sites", { method: "POST", body }),
   update: (id: number, body: SiteInput) => api<Site>(`/sites/${id}`, { method: "PUT", body }),
   remove: (id: number) => api<null>(`/sites/${id}`, { method: "DELETE" }),

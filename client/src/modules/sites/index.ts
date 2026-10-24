@@ -1,4 +1,4 @@
-export type { Site, SiteInput, SiteStatus } from "./types";
+export type { Site, SiteInput, SiteStatus, Weather } from "./types";
 export { sitesApi } from "./api";
 export { SiteDetailPage } from "./SiteDetailPage";
 export { SiteFormPage } from "./SiteFormPage";

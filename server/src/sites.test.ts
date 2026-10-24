@@ -1,5 +1,5 @@
 import request from "supertest";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "./app.js";
 import { parseSite } from "./sites.js";
 import { SECRET, cookieFor, director, manager, stubDb } from "./test/helpers.js";
@@ -214,5 +214,55 @@ describe("PUT /api/sites/:id/managers", () => {
       .set("Cookie", cookieFor(director))
       .send({ userIds: [2] });
     expect(res.status).toBe(404);
+  });
+});
+
+describe("GET /api/sites/:id/weather", () => {
+  const openMeteo = {
+    current: { time: "2026-10-24T14:00", temperature_2m: 12.4 },
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("returns the current temperature at the site's coordinates", async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(openMeteo)));
+    vi.stubGlobal("fetch", fetch);
+    const app = createApp(stubDb(vi.fn().mockResolvedValue({ rows: [site] })), SECRET);
+
+    const res = await request(app).get("/api/sites/7/weather").set("Cookie", cookieFor(manager));
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ temperature: 12.4 });
+    const url = new URL(fetch.mock.calls[0][0]);
+    expect(url.searchParams.get("latitude")).toBe("48.7758");
+    expect(url.searchParams.get("longitude")).toBe("9.1829");
+  });
+
+  it("returns 404 without calling Open-Meteo for a site a manager isn't assigned to", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    const query = vi.fn().mockResolvedValue({ rows: [] });
+    const app = createApp(stubDb(query), SECRET);
+
+    const res = await request(app).get("/api/sites/7/weather").set("Cookie", cookieFor(manager));
+    expect(res.status).toBe(404);
+    expect(query.mock.calls[0][1]).toEqual([manager.id, 7]);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["an error status", () => Promise.resolve(new Response("{}", { status: 503 }))],
+    ["a network failure", () => Promise.reject(new TypeError("fetch failed"))],
+    ["a response without current weather", () => Promise.resolve(new Response("{}"))],
+  ])("returns 502 when Open-Meteo gives %s", async (_label, reply) => {
+    vi.stubGlobal("fetch", vi.fn(reply));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const app = createApp(stubDb(vi.fn().mockResolvedValue({ rows: [site] })), SECRET);
+
+    const res = await request(app).get("/api/sites/7/weather").set("Cookie", cookieFor(director));
+    expect(res.status).toBe(502);
+    expect(res.body).toEqual({ error: "Weather is unavailable right now" });
   });
 });

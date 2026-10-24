@@ -1,12 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { mockFetch, sentBody } from "../../test/mockFetch";
 import { SiteDetailPage } from "./SiteDetailPage";
-import type { Site } from "./types";
+import type { Site, Weather } from "./types";
 
 const mia = { id: 2, name: "Mia", email: "mia@example.com" };
 const max = { id: 3, name: "Max", email: "max@example.com" };
+const weather: Weather = { temperature: 12.4 };
 const site: Site = {
   id: 7,
   name: "Stuttgart Assembly",
@@ -35,6 +36,26 @@ describe("SiteDetailPage", () => {
       expect.stringContaining("mlat=48.7758&mlon=9.1829"),
     );
     expect(screen.getByText("Mia")).toBeInTheDocument();
+  });
+
+  it("shows the current temperature at the site", async () => {
+    mockFetch({ "GET /api/sites/7": { body: site }, "GET /api/sites/7/weather": { body: weather } });
+    render(<SiteDetailPage siteId={7} canEdit={false} onSignedOut={vi.fn()} />);
+
+    const panel = await screen.findByRole("region", { name: "Current temperature" });
+    expect(await within(panel).findByText("12°C")).toBeInTheDocument();
+  });
+
+  it("keeps the page working when the temperature is unavailable", async () => {
+    mockFetch({
+      "GET /api/sites/7": { body: site },
+      "GET /api/sites/7/weather": { status: 502, body: { error: "Weather is unavailable right now" } },
+    });
+    render(<SiteDetailPage siteId={7} canEdit={false} onSignedOut={vi.fn()} />);
+
+    expect(await screen.findByText("Temperature is unavailable right now.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Stuttgart Assembly" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("is read-only for managers", async () => {
@@ -71,7 +92,7 @@ describe("SiteDetailPage", () => {
 
     expect(await screen.findByText("Max")).toBeInTheDocument();
     expect(screen.queryByText("Mia")).not.toBeInTheDocument();
-    expect(sentBody(fetch, 2)).toEqual({ userIds: [3] });
+    expect(sentBody(fetch, 3)).toEqual({ userIds: [3] });
   });
 
   it("deletes the site after confirming and returns to the list", async () => {
@@ -98,6 +119,6 @@ describe("SiteDetailPage", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
 
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).not.toHaveBeenCalledWith("/api/sites/7", expect.objectContaining({ method: "DELETE" }));
   });
 });

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { isUnauthorized } from "../../shared/api";
 import { sitesApi } from "./api";
+import { SiteWeather } from "./SiteWeather";
 import { StatusBadge } from "./StatusBadge";
 import type { Site, SiteManager } from "./types";
 import "./sites.css";
@@ -132,6 +133,11 @@ export function SiteDetailPage({ siteId, canEdit, onSignedOut }: Props) {
           </a>
         </dd>
       </dl>
+
+      <div className="page-head section-title">
+        <h2>Temperature</h2>
+      </div>
+      <SiteWeather key={site.id} siteId={site.id} onSignedOut={onSignedOut} />
 
       <div className="page-head section-title">
         <h2>Managers</h2>
